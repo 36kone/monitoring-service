@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    restart: always
+    scale: 1
+    environment:
+      - MODE=app
+    env_file:
+      - .env
+    labels:
+      - "autoheal=true"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8000/api/core/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  background:
+    container_name: impacto-customer-service-background
+    build: .
+    environment:
+      - MODE=background
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+
+  autoheal:
+    image: willfarrell/autoheal:latest
+    restart: always
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_INTERVAL: 10
+      AUTOHEAL_START_PERIOD: 60
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

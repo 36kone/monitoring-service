@@ -1,0 +1,99 @@
+[project]
+name = "monitoring"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic==1.18.5",
+    "asyncpg==0.31.0",
+    "apscheduler==3.11.3",
+    "fastapi==0.139.2",
+    "fastapi-cache2==0.2.2",
+    "fastapi-mail==1.6.5",
+    "hatchling==1.31.0",
+    "httpx==0.28.1",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.2",
+    "PyJWT==2.10.1",
+    "pyotp==2.10.0",
+    "pwdlib[argon2]==0.3.0",
+    "python-multipart==0.0.27",
+    "pytest==9.1.1",
+    "redis==8.0.1",
+    "slowapi==0.1.10",
+    "sqlalchemy==2.0.51",
+    "uvicorn==0.51.0",
+]
+
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "ruff==0.15.22",
+    "pyright==1.1.411",
+    "hatch==1.17.1",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+    "pytest-html==4.2.0",
+    "pytest-xdist==3.8.0",
+    "testcontainers==4.14.2",
+    "debugpy==1.8.21",
+]
+
+[tool.setuptools.packages.find]
+include = ["app"]
+exclude = ["migrations", "tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", # pycodestyle/pyflakes
+    "I", # isort (imports)
+    "UP", # pyupgrade
+    "B", # bugbear
+    "SIM", # simplify
+    "RUF", # ruff rules
+]
+
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true
+force-sort-within-sections = true
+split-on-trailing-comma = true
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/**/*.py" = ["E402", "F401", "SIM103"]
+"tests/**/*.py" = ["S101"]
+"pyproject.toml" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.hatch.envs.default]
+dependency-groups = ["dev"]
+
+[tool.hatch.envs.default.scripts]
+fmt = "ruff check --fix . && ruff format ."
+test = "pytest -vv -ra --tb=short --durations=20 --cov=app --cov-report=term-missing --html=pytest_report.html --self-contained-html"
+test-fast = "pytest -n 6 -q -ra --tb=short"
+test-mod = "pytest -q -ra --tb=short tests/endpoints/{args}"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra"
