@@ -34,6 +34,3 @@ dist/
 
 # Project-specific files
 uv.lock
-alembic.ini
-
-alembic.ini
