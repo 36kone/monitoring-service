@@ -11,6 +11,7 @@ from app.db.database import Base
 from .monitor_enum import MonitorStatusEnum
 
 if TYPE_CHECKING:
+    from ..incident.incident_model import Incident
     from ..monitor_check.monitor_check_model import MonitorCheck
 
 
@@ -49,6 +50,13 @@ class Monitor(Base):
 
     checks: Mapped[list["MonitorCheck"]] = relationship(
         "MonitorCheck",
+        back_populates="monitor",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
+
+    incidents: Mapped[list["Incident"]] = relationship(
+        "Incident",
         back_populates="monitor",
         cascade="all, delete-orphan",
         lazy="noload",
