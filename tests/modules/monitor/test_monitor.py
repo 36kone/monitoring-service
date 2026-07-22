@@ -57,11 +57,11 @@ def test_list_monitors_with_filters(client: TestClient, auth_headers: dict[str, 
 def test_get_update_and_delete_monitor(client: TestClient, auth_headers: dict[str, str]) -> None:
     created = _create_monitor(client, auth_headers)
 
-    response = client.get(f'{BASE}/{created["id"]}', headers=auth_headers)
+    response = client.get(f"{BASE}/{created['id']}", headers=auth_headers)
     assert response.status_code == 200
 
     response = client.put(
-        f'{BASE}/{created["id"]}',
+        f"{BASE}/{created['id']}",
         json={"name": "API atualizada", "timeoutMs": 3000},
         headers=auth_headers,
     )
@@ -69,9 +69,9 @@ def test_get_update_and_delete_monitor(client: TestClient, auth_headers: dict[st
     assert response.json()["name"] == "API atualizada"
     assert response.json()["timeoutMs"] == 3000
 
-    response = client.delete(f'{BASE}/{created["id"]}', headers=auth_headers)
+    response = client.delete(f"{BASE}/{created['id']}", headers=auth_headers)
     assert response.status_code == 204
-    assert client.get(f'{BASE}/{created["id"]}', headers=auth_headers).status_code == 404
+    assert client.get(f"{BASE}/{created['id']}", headers=auth_headers).status_code == 404
 
 
 def test_monitor_validation(client: TestClient, auth_headers: dict[str, str]) -> None:

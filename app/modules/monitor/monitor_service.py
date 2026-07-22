@@ -44,7 +44,11 @@ class MonitorService:
             query = query.where(Monitor.status == filters.status)
 
         total = await self._session.scalar(select(func.count()).select_from(query.subquery())) or 0
-        query = query.order_by(Monitor.name.asc()).offset((filters.page - 1) * filters.size).limit(filters.size)
+        query = (
+            query.order_by(Monitor.name.asc())
+            .offset((filters.page - 1) * filters.size)
+            .limit(filters.size)
+        )
         result = await self._session.execute(query)
         items = result.scalars().all()
 
