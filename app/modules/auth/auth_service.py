@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 import secrets
 from uuid import UUID
 
@@ -27,6 +27,7 @@ from app.modules.auth.auth_schema import (
     Token,
 )
 from app.modules.user import SimpleUserResponse, User, UserService, UserSessionService
+from app.modules.user.user_session_model import UserSession
 
 
 class AuthService:
@@ -42,20 +43,67 @@ class AuthService:
         user_session = await self._user_session_service.create_user_session(
             user, ipv4=ipv4, user_agent=user_agent
         )
+        return self._create_token_response(user, user_session.id)
+
+    def _create_token_response(self, user: User, session_id: UUID) -> Token:
         access_token = create_access_token(
             CreateToken(
                 sub=str(user.id),
                 token_role="user",
-                sid=str(user_session.id),
+                sid=str(session_id),
             )
+        )
+        refresh_token = create_access_token(
+            CreateToken(
+                sub=str(user.id),
+                token_role="refresh",
+                sid=str(session_id),
+            ),
+            expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE),
         )
 
         return Token(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
             user=SimpleUserResponse.model_validate(user),
             token_role="user",
         )
+
+    async def refresh_token(self, token: str) -> Token:
+        payload = decode_access_token(token)
+        if not payload or payload.get("token_role") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        try:
+            user_id = UUID(payload["sub"])
+            session_id = UUID(payload["sid"])
+        except (KeyError, ValueError, TypeError) as error:
+            raise HTTPException(status_code=401, detail="Invalid refresh token") from error
+
+        result = await self._session.execute(
+            select(User, UserSession)
+            .join(UserSession, UserSession.user_id == User.id)
+            .where(
+                User.id == user_id,
+                UserSession.id == session_id,
+                User.deleted_at.is_(None),
+                User.is_active.is_(True),
+                UserSession.revoked_at.is_(None),
+            )
+        )
+        row = result.first()
+        if not row:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        user, user_session = row
+        expire_at = user_session.expire_at
+        if expire_at.tzinfo is None:
+            expire_at = expire_at.replace(tzinfo=UTC)
+        if expire_at < datetime.now(UTC):
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        return self._create_token_response(user, user_session.id)
 
     async def login(self, request: Request, form_data: OAuth2PasswordRequestForm) -> Token | dict:
         identifier = form_data.username.strip()

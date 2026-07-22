@@ -13,6 +13,7 @@ from app.modules.auth.auth_schema import (
     Message,
     PasswordResetConfirm,
     PasswordResetRequest,
+    RefreshTokenRequest,
     Token,
     VerifyUserByPassword,
 )
@@ -27,6 +28,12 @@ logger = logging.getLogger("auth")
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     async with get_db() as db:
         return await AuthService(db).login(request, form_data)
+
+
+@auth_router.post("/refresh", response_model=Token)
+async def refresh_token(data: RefreshTokenRequest):
+    async with get_db() as db:
+        return await AuthService(db).refresh_token(data.refresh_token)
 
 
 @auth_router.post("/verify-by-password")

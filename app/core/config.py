@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = ""
     ALGORITHM: str = ""
     ACCESS_TOKEN_EXPIRE: int = 0
+    REFRESH_TOKEN_EXPIRE: int = 10080
     MAIL_HOST: str = ""
     MAIL_PORT: int = 0
     MAIL_SECURE: bool = True

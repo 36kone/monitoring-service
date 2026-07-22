@@ -36,7 +36,9 @@ class UserSessionService:
         user_session = UserSession(
             id=uuid.uuid4(),
             user_id=user.id,
-            expire_at=datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE),
+            expire_at=(datetime.now(UTC) + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE)).replace(
+                tzinfo=None
+            ),
             user_agent=user_agent,
             ipv4=ipv4,
         )
@@ -179,7 +181,7 @@ class UserSessionService:
                 )
             )
             .values(
-                revoked_at=datetime.now(UTC),
+                revoked_at=datetime.now(UTC).replace(tzinfo=None),
                 revoked_by=current_user_id,
             )
         )
@@ -199,7 +201,7 @@ class UserSessionService:
                 )
             )
             .values(
-                revoked_at=datetime.now(UTC),
+                revoked_at=datetime.now(UTC).replace(tzinfo=None),
             )
         )
 

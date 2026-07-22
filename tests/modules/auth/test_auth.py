@@ -12,6 +12,35 @@ def test_read_current_user(client: TestClient, auth_headers: dict[str, str]) -> 
     assert response.json()["id"] is not None
 
 
+def test_refresh_token(client: TestClient) -> None:
+    login = client.post(
+        f"{API_PREFIX}/auth/login",
+        data={"username": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+    )
+    assert login.status_code == 200, login.text
+
+    response = client.post(
+        f"{BASE}/refresh",
+        json={"refreshToken": login.json()["refreshToken"]},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["accessToken"]
+    assert response.json()["refreshToken"]
+
+
+def test_refresh_token_rejects_access_token(client: TestClient) -> None:
+    login = client.post(
+        f"{API_PREFIX}/auth/login",
+        data={"username": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+    )
+    assert login.status_code == 200, login.text
+    response = client.post(
+        f"{BASE}/refresh",
+        json={"refreshToken": login.json()["accessToken"]},
+    )
+    assert response.status_code == 401
+
+
 def test_update_current_user(client: TestClient, auth_headers: dict[str, str]) -> None:
     # email/phone são obrigatórios no update (evita sobrescrever com None).
     response = client.put(

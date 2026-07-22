@@ -6,9 +6,14 @@ from app.schemas.base import BaseSchema
 
 class Token(BaseSchema):
     access_token: str
+    refresh_token: str | None = None
     token_type: str
     user: SimpleUserResponse
     token_role: str
+
+
+class RefreshTokenRequest(BaseSchema):
+    refresh_token: str
 
 
 class PasswordResetRequest(BaseModel):
