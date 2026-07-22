@@ -5,6 +5,7 @@ from app.modules.monitor_check.monitor_check_schema import CreateMonitorCheck
 from tests.conftest import API_PREFIX
 
 MONITORS_BASE = f"{API_PREFIX}/monitors"
+CHECKS_BASE = f"{API_PREFIX}/monitor-checks"
 
 
 def _create_monitor(client: TestClient, auth_headers: dict[str, str]) -> dict:
@@ -36,7 +37,7 @@ def _create_check(
     }
     payload.update(overrides)
     response = client.post(
-        f"{MONITORS_BASE}/{monitor_id}/checks",
+        f"{CHECKS_BASE}/{monitor_id}/checks",
         json=payload,
         headers=auth_headers,
     )
@@ -48,7 +49,7 @@ def test_create_monitor_check(client: TestClient, auth_headers: dict[str, str]) 
     monitor = _create_monitor(client, auth_headers)
 
     response = client.post(
-        f"{MONITORS_BASE}/{monitor['id']}/checks",
+        f"{CHECKS_BASE}/{monitor['id']}/checks",
         json={
             "status": "down",
             "statusCode": 503,
@@ -80,7 +81,7 @@ def test_list_monitor_checks_with_filters(client: TestClient, auth_headers: dict
     )
 
     response = client.get(
-        f"{MONITORS_BASE}/{monitor['id']}/checks",
+        f"{CHECKS_BASE}/{monitor['id']}/checks",
         params={"status": "down", "success": "false"},
         headers=auth_headers,
     )
@@ -96,7 +97,7 @@ def test_get_update_and_delete_monitor_check(
 ) -> None:
     monitor = _create_monitor(client, auth_headers)
     check = _create_check(client, auth_headers, monitor["id"])
-    url = f"{MONITORS_BASE}/{monitor['id']}/checks/{check['id']}"
+    url = f"{CHECKS_BASE}/{monitor['id']}/checks/{check['id']}"
 
     response = client.get(url, headers=auth_headers)
     assert response.status_code == 200, response.text
@@ -120,7 +121,7 @@ def test_monitor_check_requires_existing_monitor(
     client: TestClient, auth_headers: dict[str, str]
 ) -> None:
     response = client.get(
-        f"{MONITORS_BASE}/00000000-0000-0000-0000-000000000000/checks",
+        f"{CHECKS_BASE}/00000000-0000-0000-0000-000000000000/checks",
         headers=auth_headers,
     )
 
@@ -131,7 +132,7 @@ def test_monitor_check_validation(client: TestClient, auth_headers: dict[str, st
     monitor = _create_monitor(client, auth_headers)
 
     response = client.post(
-        f"{MONITORS_BASE}/{monitor['id']}/checks",
+        f"{CHECKS_BASE}/{monitor['id']}/checks",
         json={"statusCode": 99, "latencyMs": -1},
         headers=auth_headers,
     )
