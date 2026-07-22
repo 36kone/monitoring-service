@@ -387,7 +387,9 @@ class UserService:
 
         entity.password_recovery = token
 
-        entity.password_recovery_expire = datetime.now(UTC) + timedelta(hours=1)
+        entity.password_recovery_expire = (
+            datetime.now(UTC) + timedelta(hours=1)
+        ).replace(tzinfo=None)
 
         await self._session.commit()
 
@@ -404,7 +406,7 @@ class UserService:
                 detail="Not found",
             )
 
-        entity.deleted_at = datetime.now(UTC)
+        entity.deleted_at = datetime.now(UTC).replace(tzinfo=None)
         entity.updated_by = current_user_id
 
         await self._session.commit()

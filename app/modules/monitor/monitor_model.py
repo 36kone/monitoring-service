@@ -1,13 +1,17 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Boolean, Enum, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
 from .monitor_enum import MonitorStatusEnum
+
+if TYPE_CHECKING:
+    from ..monitor_check.monitor_check_model import MonitorCheck
 
 
 class Monitor(Base):
@@ -41,4 +45,11 @@ class Monitor(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    checks: Mapped[list["MonitorCheck"]] = relationship(
+        "MonitorCheck",
+        back_populates="monitor",
+        cascade="all, delete-orphan",
+        lazy="noload",
     )
