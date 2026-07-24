@@ -9,7 +9,7 @@ def test_client_fixture_is_working(client: TestClient) -> None:
 
 
 def test_health_check(client: TestClient) -> None:
-    response = client.get("/api/core/health")
+    response = client.get("/api/health")
 
     assert response.status_code == 200
     assert response.json()["message"] == "Core Running OK"
@@ -26,7 +26,7 @@ def test_health_check_database_unavailable(
 
     monkeypatch.setattr("app.api.v1.health.health_controller.get_db", _db_down)
 
-    response = client.get("/api/core/health")
+    response = client.get("/api/health")
 
     assert response.status_code == 503
     body = response.json()

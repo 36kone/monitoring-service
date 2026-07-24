@@ -20,7 +20,7 @@ from app.db.database import Base
 from app.main import app
 from tests.seed import ADMIN_EMAIL, ADMIN_PASSWORD, seed_db
 
-API_PREFIX = "/api/core/v1"
+API_PREFIX = "/api/v1"
 EXTRA_SCHEMAS = ("auth",)
 
 

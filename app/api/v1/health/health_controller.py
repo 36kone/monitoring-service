@@ -14,7 +14,7 @@ health_router = APIRouter()
 logger = logging.getLogger("health")
 
 
-@health_router.get("/api/core/health", tags=["Health"], response_model=HealthResponse)
+@health_router.get("/api/health", tags=["Health"], response_model=HealthResponse)
 async def health_check(
     request: Request, response: Response, client_ip: str = Depends(get_client_ip)
 ):

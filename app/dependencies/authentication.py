@@ -14,7 +14,7 @@ from app.core.security import decode_access_token
 from app.db.database import get_db
 from app.modules.user import User, UserSession
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/core/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
