@@ -137,6 +137,7 @@ class UserService:
             phone=data.phone,
             single_session=data.single_session,
             mfa_enabled=data.mfa_enabled,
+            is_admin=data.is_admin,
         )
 
         self._session.add(entity)

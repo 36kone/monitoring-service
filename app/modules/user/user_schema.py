@@ -13,6 +13,7 @@ class CreateUser(BaseSchema):
     phone: str
     single_session: bool | None = True
     mfa_enabled: bool | None = False
+    is_admin: bool = False
 
     @field_validator("password", mode="after")
     @classmethod
