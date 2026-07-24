@@ -45,7 +45,7 @@ def test_create_incident(client: TestClient, auth_headers: dict[str, str]) -> No
     monitor = _create_monitor(client, auth_headers)
 
     response = client.post(
-        f'{INCIDENTS_BASE}/{monitor["id"]}',
+        f"{INCIDENTS_BASE}/{monitor['id']}",
         json={"status": "open"},
         headers=auth_headers,
     )
@@ -73,7 +73,7 @@ def test_list_incidents_with_status_filter(
     )
 
     response = client.get(
-        f'{INCIDENTS_BASE}/{monitor["id"]}',
+        f"{INCIDENTS_BASE}/{monitor['id']}",
         params={"status": "resolved"},
         headers=auth_headers,
     )
@@ -85,12 +85,10 @@ def test_list_incidents_with_status_filter(
     assert data["list"][0]["durationSeconds"] == 120
 
 
-def test_get_update_and_delete_incident(
-    client: TestClient, auth_headers: dict[str, str]
-) -> None:
+def test_get_update_and_delete_incident(client: TestClient, auth_headers: dict[str, str]) -> None:
     monitor = _create_monitor(client, auth_headers)
     incident = _create_incident(client, auth_headers, monitor["id"])
-    url = f'{INCIDENTS_BASE}/{monitor["id"]}/{incident["id"]}'
+    url = f"{INCIDENTS_BASE}/{monitor['id']}/{incident['id']}"
     resolved_at = datetime.now(UTC)
 
     response = client.get(url, headers=auth_headers)
@@ -130,7 +128,7 @@ def test_incident_validation(client: TestClient, auth_headers: dict[str, str]) -
     started_at = datetime.now(UTC)
 
     response = client.post(
-        f'{INCIDENTS_BASE}/{monitor["id"]}',
+        f"{INCIDENTS_BASE}/{monitor['id']}",
         json={
             "status": "resolved",
             "startedAt": started_at.isoformat(),

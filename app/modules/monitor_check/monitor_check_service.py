@@ -1,8 +1,10 @@
 from uuid import UUID
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.database import get_db
 from app.dependencies.exception_utils import ensure_or_404
 from app.schemas import PaginatedResponse
 
@@ -34,11 +36,16 @@ class MonitorCheckService:
             latency_ms=data.latency_ms,
             error=data.error,
             timed_out=data.timed_out,
-            checked_at=data.checked_at,
         )
         self._session.add(entity)
         await self._session.commit()
         return await self.get_by_id(monitor_id, entity.id)
+
+    async def create_from_result(self, check: MonitorCheck) -> MonitorCheck:
+        await self._get_monitor(check.monitor_id)
+        self._session.add(check)
+        await self._session.commit()
+        return await self.get_by_id(check.monitor_id, check.id)
 
     async def search(
         self, monitor_id: UUID, filters: MonitorCheckSearchRequest
@@ -89,3 +96,9 @@ class MonitorCheckService:
         entity = await self.get_by_id(monitor_id, id_)
         await self._session.delete(entity)
         await self._session.commit()
+
+
+def get_monitor_check_service(
+    session: AsyncSession = Depends(get_db),
+) -> MonitorCheckService:
+    return MonitorCheckService(session)

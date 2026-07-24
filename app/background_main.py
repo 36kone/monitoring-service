@@ -6,6 +6,8 @@ from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from .modules.monitor.monitor_execution_service import run_monitor_jobs
+
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
 logger: Logger = logging.getLogger("background-main")
 
@@ -21,7 +23,14 @@ async def main() -> None:
         }
     )
 
-    scheduler.add_job()
+    scheduler.add_job(
+        run_monitor_jobs,
+        trigger="interval",
+        seconds=1,
+        id="monitor-health-checks",
+        max_instances=1,
+        coalesce=True,
+    )
 
     scheduler.start()
 

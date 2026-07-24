@@ -15,7 +15,6 @@ class CreateMonitorCheck(BaseSchema):
     latency_ms: int | None = Field(default=None, ge=0)
     error: str | None = Field(default=None, max_length=1000)
     timed_out: bool = False
-    checked_at: datetime | None = None
 
 
 class UpdateMonitorCheck(BaseSchema):

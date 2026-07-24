@@ -8,6 +8,7 @@ from fastapi.security import (
     OAuth2PasswordBearer,
 )
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token
 from app.db.database import get_db
@@ -41,6 +42,7 @@ async def get_token_payload(
 async def get_mfa_user(
     bearer: HTTPAuthorizationCredentials = Security(bearer_scheme),
     oauth2: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     token = bearer.credentials if bearer else oauth2
     if not token:
@@ -64,8 +66,7 @@ async def get_mfa_user(
     except Exception as e:
         raise credentials_exception from e
 
-    async with get_db() as db:
-        user = await db.scalar(select(User).where(User.id == user_id))
+    user = await db.scalar(select(User).where(User.id == user_id))
 
     if not user:
         raise credentials_exception
@@ -76,8 +77,10 @@ async def get_mfa_user(
 async def get_auth_user(
     bearer: HTTPAuthorizationCredentials = Security(bearer_scheme),
     oauth2: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     token = bearer.credentials if bearer else oauth2
+
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
@@ -88,11 +91,12 @@ async def get_auth_user(
     )
 
     payload = decode_access_token(token)
+
     if payload is None:
         raise credentials_exception
 
-    if payload.get("token_role") == "mfa":
-        raise credentials_exception
+    # if payload.get("token_role") == "mfa":
+    #     raise credentials_exception
 
     try:
         user_id = UUID(payload.get("sub"))
@@ -106,8 +110,7 @@ async def get_auth_user(
         .where(User.id == user_id, UserSession.id == session_id)
     )
 
-    async with get_db() as db:
-        result = await db.execute(query)
+    result = await db.execute(query)
 
     result = result.first()
 

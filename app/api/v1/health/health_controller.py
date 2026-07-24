@@ -39,7 +39,7 @@ async def health_check(
 
 async def _check_database_alive() -> bool:
     try:
-        async with get_db() as db:
+        async for db in get_db():
             await db.execute(text("SELECT 1"))
 
         return True
