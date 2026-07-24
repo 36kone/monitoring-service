@@ -2,12 +2,13 @@ from datetime import UTC, datetime, timedelta
 import uuid
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
+from app.db.database import get_db
 from app.dependencies.exception_utils import ensure_or_404
 from app.schemas import PaginatedResponse
 
@@ -206,3 +207,7 @@ class UserSessionService:
         )
 
         await self._session.commit()
+
+
+def get_user_session_service(session: AsyncSession = Depends(get_db)) -> UserSessionService:
+    return UserSessionService(session)

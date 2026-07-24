@@ -1,12 +1,16 @@
+from datetime import datetime
 from uuid import UUID
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.database import get_db
 from app.dependencies.exception_utils import ensure_or_404
 from app.schemas import PaginatedResponse
 
 from ..monitor.monitor_model import Monitor
+from .incident_enum import IncidentStatusEnum
 from .incident_model import Incident
 from .incident_schema import CreateIncident, IncidentResponse, IncidentSearchRequest, UpdateIncident
 
@@ -31,6 +35,46 @@ class IncidentService:
         self._session.add(entity)
         await self._session.commit()
         return await self.get_by_id(monitor_id, entity.id)
+
+    async def process_check(
+        self,
+        monitor_id: UUID,
+        success: bool,
+        checked_at: datetime,
+    ) -> None:
+        open_incident = await self._session.scalar(
+            select(Incident)
+            .where(
+                Incident.monitor_id == monitor_id,
+                Incident.status == IncidentStatusEnum.OPEN,
+            )
+            .order_by(Incident.started_at.desc())
+        )
+
+        if success:
+            if open_incident is None:
+                return
+
+            open_incident.status = IncidentStatusEnum.RESOLVED
+            open_incident.resolved_at = checked_at
+            open_incident.duration_seconds = max(
+                0,
+                int((checked_at - open_incident.started_at).total_seconds()),
+            )
+            await self._session.commit()
+            return
+
+        if open_incident is not None:
+            return
+
+        self._session.add(
+            Incident(
+                monitor_id=monitor_id,
+                status=IncidentStatusEnum.OPEN,
+                started_at=checked_at,
+            )
+        )
+        await self._session.commit()
 
     async def search(
         self, monitor_id: UUID, filters: IncidentSearchRequest
@@ -75,3 +119,7 @@ class IncidentService:
         entity = await self.get_by_id(monitor_id, id_)
         await self._session.delete(entity)
         await self._session.commit()
+
+
+def get_incident_service(session: AsyncSession = Depends(get_db)) -> IncidentService:
+    return IncidentService(session)

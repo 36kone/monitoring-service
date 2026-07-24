@@ -3,6 +3,8 @@ import tomllib
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ..enums import ENV
+
 
 def get_project_version() -> str:
     pyproject_path = Path("pyproject.toml")
@@ -16,10 +18,10 @@ class Settings(BaseSettings):
 
     PROJECT_TITLE: str = "Monitoring API"
     PROJECT_DESCRIPTION: str = "Monitoring API"
-    DOCS_URL: str = "/api/core/docs"
-    REDOC_URL: str = "/api/core/redoc"
-    OPENAPI_URL: str = "/api/core/openapi.json"
-    API_PREFIX: str = "/api/core/v1"
+    DOCS_URL: str = "/api/docs"
+    REDOC_URL: str = "/api/redoc"
+    OPENAPI_URL: str = "/api/openapi.json"
+    API_PREFIX: str = "/api/v1"
 
     ENV: str = "dev"
     DATABASE_URL: str = ""
@@ -37,7 +39,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        if self.ENV == "prd":
+        if self.ENV == ENV.PRD:
             return [
                 "http://localhost:8080",
                 "http://localhost:8081",

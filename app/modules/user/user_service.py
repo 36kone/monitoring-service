@@ -2,13 +2,14 @@ from datetime import UTC, datetime, timedelta
 import logging
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from pydantic import EmailStr
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.security import get_password_hash, verify_password
+from app.db.database import get_db
 from app.schemas import PaginatedResponse
 
 from ...dependencies.exception_utils import ensure_400, ensure_or_400, ensure_or_404
@@ -387,9 +388,9 @@ class UserService:
 
         entity.password_recovery = token
 
-        entity.password_recovery_expire = (
-            datetime.now(UTC) + timedelta(hours=1)
-        ).replace(tzinfo=None)
+        entity.password_recovery_expire = (datetime.now(UTC) + timedelta(hours=1)).replace(
+            tzinfo=None
+        )
 
         await self._session.commit()
 
@@ -410,3 +411,7 @@ class UserService:
         entity.updated_by = current_user_id
 
         await self._session.commit()
+
+
+def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:
+    return UserService(session)

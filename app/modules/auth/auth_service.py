@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 import secrets
 from uuid import UUID
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 import pyotp
 from sqlalchemy import select
@@ -16,6 +16,7 @@ from app.core.security import (
     get_password_hash,
     verify_password,
 )
+from app.db.database import get_db
 from app.dependencies.email_sender import EmailSender
 from app.dependencies.exception_utils import ensure_or_400
 from app.modules.auth.auth_schema import (
@@ -72,6 +73,7 @@ class AuthService:
 
     async def refresh_token(self, token: str) -> Token:
         payload = decode_access_token(token)
+
         if not payload or payload.get("token_role") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -93,13 +95,16 @@ class AuthService:
             )
         )
         row = result.first()
+
         if not row:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
         user, user_session = row
         expire_at = user_session.expire_at
+
         if expire_at.tzinfo is None:
             expire_at = expire_at.replace(tzinfo=UTC)
+
         if expire_at < datetime.now(UTC):
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -145,6 +150,7 @@ class AuthService:
             )
 
         ipv4 = request.client.host if request.client else None
+
         return await self._create_user_access_token(
             user,
             ipv4=ipv4,
@@ -159,25 +165,30 @@ class AuthService:
         )
 
         current_user.password = await get_password_hash(data.new_password)
+
         await self._session.commit()
         await self._session.refresh(current_user)
+
         return Message(message="Password changed successfully")
 
     async def request_password_reset(self, data: PasswordResetRequest) -> Message:
         user = await self._user_service.get_by_email(data.email)
         reset_token = secrets.token_urlsafe(32)
+
         await self._user_service.update_user_password_reset_token(
             email=data.email,
             token=reset_token,
         )
 
         reset_url = f"{settings.API_PREFIX}/auth/reset-password?token={reset_token}"
+
         await self._email_sender.send_email(
             subject="Recuperação de Senha",
             email_to=data.email,
             template_path="app/templates/password_reset.html",
             context={"username": user.name, "reset_url": reset_url},
         )
+
         return Message(message="Email for reset password sent successfully")
 
     async def confirm_password_reset(self, data: PasswordResetConfirm) -> Message:
@@ -187,15 +198,18 @@ class AuthService:
 
     async def verify_2fa(self, code: str, request: Request, token: str) -> Token:
         payload = decode_access_token(token)
+
         if not payload or payload.get("token_role") != "mfa":
             raise HTTPException(status_code=401, detail="Unauthorized")
 
         user_id = payload.get("sub")
         user = await self._user_service.get_by_id(UUID(user_id))
+
         if not user.mfa_secret:
             raise HTTPException(status_code=400, detail="Missing MFA setup")
 
         ensure_or_400(pyotp.TOTP(user.mfa_secret).verify(code), "Invalid code")
+
         return await self._create_user_access_token(
             user,
             ipv4=request.client.host if request.client else None,
@@ -206,28 +220,41 @@ class AuthService:
         current_user = await self._user_service.get_by_id(user_id)
         secret = pyotp.random_base32()
         current_user.mfa_secret = secret
+
         await self._session.commit()
+
         uri = pyotp.totp.TOTP(secret).provisioning_uri(
             name=current_user.email,
             issuer_name="Monitoring",
         )
+
         return secret, uri
 
     async def enable_2fa(self, payload: Enable2FARequest, user_id: UUID) -> Message:
         current_user = await self._user_service.get_by_id(user_id)
+
         if not current_user.mfa_secret:
             raise HTTPException(status_code=400, detail="Missing MFA setup")
 
         ensure_or_400(pyotp.TOTP(current_user.mfa_secret).verify(payload.code), "Invalid code")
         current_user.mfa_enabled = True
+
         await self._session.commit()
+
         return Message(message="2FA activated")
 
     async def disable_2fa(self, user_id: UUID) -> Message:
         current_user = await self._user_service.get_by_id(user_id)
         ensure_or_400(current_user.mfa_enabled, "2FA already disabled")
+
         current_user.mfa_enabled = False
         current_user.mfa_secret = None
+
         await self._session.commit()
         await self._session.refresh(current_user)
+
         return Message(message="2fa disabled")
+
+
+def get_auth_service(session: AsyncSession = Depends(get_db)) -> AuthService:
+    return AuthService(session)

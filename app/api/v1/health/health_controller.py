@@ -14,7 +14,7 @@ health_router = APIRouter()
 logger = logging.getLogger("health")
 
 
-@health_router.get("/api/core/health", tags=["Health"], response_model=HealthResponse)
+@health_router.get("/api/health", tags=["Health"], response_model=HealthResponse)
 async def health_check(
     request: Request, response: Response, client_ip: str = Depends(get_client_ip)
 ):
@@ -39,7 +39,7 @@ async def health_check(
 
 async def _check_database_alive() -> bool:
     try:
-        async with get_db() as db:
+        async for db in get_db():
             await db.execute(text("SELECT 1"))
 
         return True
