@@ -7,6 +7,10 @@ from ...db.database import AsyncSessionLocal, get_db
 from ..incident import IncidentService
 from ..monitor import MonitorService
 from ..monitor.health_checker import HealthChecker
+from ..monitor_authentication.authentication_resolver import AuthenticationResolver
+from ..monitor_authentication.monitor_authentication_service import (
+    MonitorAuthenticationService,
+)
 from ..monitor_check import MonitorCheckService
 
 
@@ -23,10 +27,13 @@ class MonitorExecutionService:
             monitor_service = MonitorService(session)
             monitor_check_service = MonitorCheckService(session)
             incident_service = IncidentService(session)
+            authentication_service = MonitorAuthenticationService(session)
 
             monitor = await monitor_service.get_by_id(monitor_id)
 
-            check = await HealthChecker(monitor).check()
+            check = await HealthChecker(
+                monitor, AuthenticationResolver(authentication_service)
+            ).check()
 
             check = await monitor_check_service.create_from_result(check)
 

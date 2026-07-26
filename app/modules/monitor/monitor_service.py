@@ -30,6 +30,8 @@ class MonitorService:
             method=data.method,
             interval_seconds=data.interval_seconds,
             timeout_ms=data.timeout_ms,
+            request_body=data.body,
+            request_headers=data.headers,
             enabled=data.enabled,
         )
         self._session.add(entity)
@@ -103,8 +105,9 @@ class MonitorService:
 
     async def update(self, id_: UUID, data: UpdateMonitor) -> Monitor:
         entity = await self.get_by_id(id_)
+        fields = {"body": "request_body", "headers": "request_headers"}
         for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(entity, field, str(value) if field == "url" else value)
+            setattr(entity, fields.get(field, field), str(value) if field == "url" else value)
         await self._session.commit()
         return await self.get_by_id(entity.id)
 

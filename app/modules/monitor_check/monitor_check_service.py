@@ -35,6 +35,7 @@ class MonitorCheckService:
             success=data.success,
             latency_ms=data.latency_ms,
             error=data.error,
+            response_body=None if data.response_body == "" else data.response_body,
             timed_out=data.timed_out,
         )
         self._session.add(entity)
@@ -43,6 +44,8 @@ class MonitorCheckService:
 
     async def create_from_result(self, check: MonitorCheck) -> MonitorCheck:
         await self._get_monitor(check.monitor_id)
+        if check.response_body == "":
+            check.response_body = None
         self._session.add(check)
         await self._session.commit()
         return await self.get_by_id(check.monitor_id, check.id)
@@ -88,7 +91,7 @@ class MonitorCheckService:
     async def update(self, monitor_id: UUID, id_: UUID, data: UpdateMonitorCheck) -> MonitorCheck:
         entity = await self.get_by_id(monitor_id, id_)
         for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(entity, field, value)
+            setattr(entity, field, None if field == "response_body" and value == "" else value)
         await self._session.commit()
         return await self.get_by_id(monitor_id, entity.id)
 
