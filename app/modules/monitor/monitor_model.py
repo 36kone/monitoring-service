@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Enum, Integer, String, Text, func
+from sqlalchemy import JSON, TIMESTAMP, Boolean, Enum, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,6 +24,8 @@ class Monitor(Base):
     method: Mapped[str] = mapped_column(String, nullable=False)
     interval_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
     timeout_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=5000)
+    request_body: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    request_headers: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     status: Mapped[MonitorStatusEnum] = mapped_column(
         Enum(

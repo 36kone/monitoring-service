@@ -96,6 +96,7 @@ async def test_background_checks_application_health(
     assert checks[0].status is MonitorStatusEnum.UP
     assert checks[0].status_code == 200
     assert checks[0].latency_ms is not None
+    assert checks[0].response_body["message"] == "Core Running OK"
     assert monitor.status is MonitorStatusEnum.UP
     assert monitor.next_check_at is not None
     assert incident is None

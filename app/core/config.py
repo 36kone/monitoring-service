@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
     REDIS_URL: str = ""
     SECRET_KEY: str = ""
+    CREDENTIALS_ENCRYPTION_KEY: str = ""
     ALGORITHM: str = ""
     ACCESS_TOKEN_EXPIRE: int = 0
     REFRESH_TOKEN_EXPIRE: int = 10080

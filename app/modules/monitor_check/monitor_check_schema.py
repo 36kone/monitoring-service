@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import Field
@@ -14,6 +15,7 @@ class CreateMonitorCheck(BaseSchema):
     success: bool = False
     latency_ms: int | None = Field(default=None, ge=0)
     error: str | None = Field(default=None, max_length=1000)
+    response_body: Any | None = None
     timed_out: bool = False
 
 
@@ -23,6 +25,7 @@ class UpdateMonitorCheck(BaseSchema):
     success: bool | None = None
     latency_ms: int | None = Field(default=None, ge=0)
     error: str | None = Field(default=None, max_length=1000)
+    response_body: Any | None = None
     timed_out: bool | None = None
     checked_at: datetime | None = None
 
@@ -35,6 +38,7 @@ class MonitorCheckResponse(BaseSchema):
     success: bool
     latency_ms: int | None
     error: str | None
+    response_body: Any | None
     timed_out: bool
     checked_at: datetime
     created_at: datetime

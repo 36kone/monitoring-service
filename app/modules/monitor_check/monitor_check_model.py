@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, TIMESTAMP, Boolean, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,6 +35,7 @@ class MonitorCheck(Base):
     success: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     error: Mapped[str | None] = mapped_column(String, nullable=True)
+    response_body: Mapped[Any | None] = mapped_column(JSON, nullable=True)
     timed_out: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     checked_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import AnyHttpUrl, Field, field_validator
+from pydantic import AliasChoices, AnyHttpUrl, Field, field_validator
 
 from app.schemas.base import BaseSchema
 
@@ -14,6 +14,8 @@ class CreateMonitor(BaseSchema):
     method: str = Field(min_length=1, max_length=20)
     interval_seconds: int = Field(default=60, gt=0)
     timeout_ms: int = Field(default=5000, gt=0)
+    body: dict | None = None
+    headers: dict[str, str] | None = None
     enabled: bool = True
 
     @field_validator("method", mode="before")
@@ -28,6 +30,8 @@ class UpdateMonitor(BaseSchema):
     method: str | None = Field(default=None, min_length=1, max_length=20)
     interval_seconds: int | None = Field(default=None, gt=0)
     timeout_ms: int | None = Field(default=None, gt=0)
+    body: dict | None = None
+    headers: dict[str, str] | None = None
     enabled: bool | None = None
 
     @field_validator("method", mode="before")
@@ -43,6 +47,8 @@ class MonitorResponse(BaseSchema):
     method: str
     interval_seconds: int
     timeout_ms: int
+    body: dict | None = Field(default=None, validation_alias=AliasChoices("body", "request_body"), serialization_alias="body")
+    headers: dict[str, str] | None = Field(default=None, validation_alias=AliasChoices("headers", "request_headers"), serialization_alias="headers")
     enabled: bool
     status: MonitorStatusEnum
     consecutive_failures: int
